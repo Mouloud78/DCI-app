@@ -15,4 +15,6 @@ public class Patient
     public string Address { get; set; } = string.Empty;
 
     public string FullName => $"{FirstName} {LastName}";
+
+    public List<MedicalHistory> MedicalHistories { get; set; } = new();
 }

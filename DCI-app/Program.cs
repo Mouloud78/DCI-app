@@ -16,6 +16,8 @@ builder.Services.AddMudServices();
 
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<PatientService>();
+builder.Services.AddScoped<MedicalHistoryService>();
+builder.Services.AddScoped<ConsultationService>();
 
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

@@ -1,15 +1,25 @@
 ﻿@page "/patient/{Id:int}"
 @rendermode InteractiveServer
+
 @using MudBlazor
 @using DCI_app.Models
+
 @inject DCI_app.Services.PatientService PatientService
+@inject DCI_app.Services.MedicalHistoryService HistoryService
+@inject DCI_app.Services.ConsultationService ConsultationService
 @inject NavigationManager Nav
 
 <MudContainer Class="mt-6">
 
-    @if (_patient is null)
+    @if (_loading)
     {
         <MudProgressCircular Indeterminate="true" />
+    }
+    else if (_patient is null)
+    {
+        <MudAlert Severity="Severity.Error">
+            Patient introuvable
+        </MudAlert>
     }
     else
     {
@@ -20,42 +30,174 @@
         </MudButton>
 
         <MudText Typo="Typo.h4" Color="Color.Primary" Class="mt-3">
-            👤 Fiche Patient
+            👤 @_patient.FullName
         </MudText>
 
-        <MudPaper Class="pa-4 mt-4" Elevation="3">
+        <MudTabs Elevation="2" Rounded="true" Class="mt-4">
 
-            <MudText Typo="Typo.h6">
-                @(_patient.FullName)
-            </MudText>
+            <!-- ================= PATIENT INFO ================= -->
+            <MudTabPanel Text="👤 Infos">
 
-            <MudDivider Class="my-3" />
+                <MudPaper Class="pa-4 mt-3" Elevation="3">
 
-            <MudText><b>Téléphone :</b> @_patient.Phone</MudText>
-            <MudText><b>Adresse :</b> @_patient.Address</MudText>
+                    <MudText><b>Téléphone:</b> @_patient.Phone</MudText>
+                    <MudText><b>Adresse:</b> @_patient.Address</MudText>
+                    <MudText><b>Date naissance:</b> @_patient.DateOfBirth.ToShortDateString()</MudText>
 
-            <MudText><b>Date naissance :</b> @_patient.DateOfBirth.ToShortDateString()</MudText>
+                </MudPaper>
 
-        </MudPaper>
+            </MudTabPanel>
 
-        <!-- SECTION FUTURE -->
-        <MudPaper Class="pa-4 mt-4" Elevation="3">
-            <MudText Typo="Typo.h6">📁 Historique médical</MudText>
-            <MudText Color="Color.Secondary">
-                (à venir : consultations, prescriptions, examens)
-            </MudText>
-        </MudPaper>
+            <!-- ================= HISTORIQUE ================= -->
+            <MudTabPanel Text="🧾 Historique">
+
+                <MudPaper Class="pa-4 mt-3" Elevation="3">
+
+                    @if (!_histories.Any())
+                    {
+                        <MudText Color="Color.Secondary">
+                            Aucun historique médical
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudTable Items="_histories" Hover="true">
+
+                            <HeaderContent>
+                                <MudTh>Date</MudTh>
+                                <MudTh>Diagnostic</MudTh>
+                                <MudTh>Traitement</MudTh>
+                                <MudTh>Notes</MudTh>
+                            </HeaderContent>
+
+                            <RowTemplate>
+                                <MudTd>@context.Date.ToShortDateString()</MudTd>
+                                <MudTd>@context.Diagnosis</MudTd>
+                                <MudTd>@context.Treatment</MudTd>
+                                <MudTd>@context.Notes</MudTd>
+                            </RowTemplate>
+
+                        </MudTable>
+                    }
+
+                </MudPaper>
+
+            </MudTabPanel>
+
+            <!-- ================= CONSULTATIONS ================= -->
+            <MudTabPanel Text="🩺 Consultations">
+
+                <!-- FORMULAIRE -->
+                <MudPaper Class="pa-4 mt-3" Elevation="3">
+
+                    <MudText Typo="Typo.h6">Nouvelle consultation</MudText>
+
+                    <MudGrid>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_newConsultation.DoctorName"
+                                          Label="Médecin" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_newConsultation.Symptoms"
+                                          Label="Symptômes"
+                                          Lines="2" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_newConsultation.Diagnosis"
+                                          Label="Diagnostic"
+                                          Lines="2" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_newConsultation.Prescription"
+                                          Label="Prescription"
+                                          Lines="2" />
+                        </MudItem>
+
+                    </MudGrid>
+
+                    <MudButton Color="Color.Primary"
+                               Variant="Variant.Filled"
+                               Class="mt-3"
+                               OnClick="AddConsultation">
+                        Ajouter consultation
+                    </MudButton>
+
+                </MudPaper>
+
+                <!-- TABLE -->
+                <MudPaper Class="pa-4 mt-4" Elevation="3">
+
+                    @if (!_consultations.Any())
+                    {
+                        <MudText Color="Color.Secondary">
+                            Aucune consultation
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudTable Items="_consultations" Hover="true">
+
+                            <HeaderContent>
+                                <MudTh>Date</MudTh>
+                                <MudTh>Médecin</MudTh>
+                                <MudTh>Diagnostic</MudTh>
+                            </HeaderContent>
+
+                            <RowTemplate>
+                                <MudTd>@context.Date.ToShortDateString()</MudTd>
+                                <MudTd>@context.DoctorName</MudTd>
+                                <MudTd>@context.Diagnosis</MudTd>
+                            </RowTemplate>
+
+                        </MudTable>
+                    }
+
+                </MudPaper>
+
+            </MudTabPanel>
+
+        </MudTabs>
     }
 
 </MudContainer>
 
 @code {
+
     [Parameter] public int Id { get; set; }
 
+    private bool _loading = true;
+
     private Patient? _patient;
+    private List<MedicalHistory> _histories = new();
+    private List<Consultation> _consultations = new();
+
+    private Consultation _newConsultation = new();
 
     protected override async Task OnInitializedAsync()
     {
         _patient = await PatientService.GetByIdAsync(Id);
+
+        if (_patient != null)
+        {
+            _histories = await HistoryService.GetByPatientIdAsync(Id);
+            _consultations = await ConsultationService.GetByPatientIdAsync(Id);
+        }
+
+        _loading = false;
+    }
+
+    private async Task AddConsultation()
+    {
+        _newConsultation.PatientId = Id;
+
+        await ConsultationService.AddAsync(_newConsultation);
+
+        _newConsultation = new Consultation();
+
+        _consultations = await ConsultationService.GetByPatientIdAsync(Id);
     }
 }
