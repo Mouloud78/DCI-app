@@ -5,6 +5,7 @@
     <RootNamespace>DCI_Shared</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<WarningsNotAsErrors>NU1510</WarningsNotAsErrors>
   </PropertyGroup>
 
 </Project>
