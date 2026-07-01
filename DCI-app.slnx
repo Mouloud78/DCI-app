@@ -1,3 +1,7 @@
 <Solution>
   <Project Path="DCI-app/DCI-app.csproj" />
+  <Project Path="DCI-Application/DCI-Application.csproj" />
+  <Project Path="DCI-Domain/DCI-Domain.csproj" />
+  <Project Path="DCI-Infrastructure/DCI-Infrastructure.csproj" />
+  <Project Path="DCI-Shared/DCI-Shared.csproj" />
 </Solution>
