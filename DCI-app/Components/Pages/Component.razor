@@ -1,0 +1,17 @@
+@using MudBlazor
+
+@page "/component"
+@rendermode InteractiveServer
+
+<MudButton OnClick="Increment">Clique-moi</MudButton>
+
+<p>Compteur : @count</p>
+
+@code {
+    private int count = 0;
+
+    private void Increment()
+    {
+        count++;
+    }
+}

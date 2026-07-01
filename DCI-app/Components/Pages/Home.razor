@@ -1,7 +1,68 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using MudBlazor
+@using DCI_app.Models
+@inject DCI_app.Services.DashboardService DashboardService
 
-<PageTitle>Home</PageTitle>
+<MudContainer Class="mt-6">
 
-<h1>Hello, world!</h1>
+    <MudText Typo="Typo.h4" Color="Color.Primary">
+        🏥 DCI - Dashboard Clinique
+    </MudText>
 
-Welcome to your new app.
+    @if (_data is null)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else
+    {
+        <MudGrid Class="mt-4">
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText>👥 Patients</MudText>
+                    <MudText Typo="Typo.h4">@_data.TotalPatients</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText>👨‍⚕️ Médecins</MudText>
+                    <MudText Typo="Typo.h4">@_data.TotalDoctors</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText>📅 RDV Aujourd'hui</MudText>
+                    <MudText Typo="Typo.h4">@_data.TodayAppointments</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="6">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText>🧪 Laboratoire</MudText>
+                    <MudText Typo="Typo.h4">@_data.PendingLabs</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="6">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText>💰 Revenus mensuels</MudText>
+                    <MudText Typo="Typo.h4">@_data.MonthlyRevenue €</MudText>
+                </MudPaper>
+            </MudItem>
+
+        </MudGrid>
+    }
+
+</MudContainer>
+
+@code {
+    private DashboardDto? _data;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await DashboardService.GetDashboardAsync();
+    }
+}

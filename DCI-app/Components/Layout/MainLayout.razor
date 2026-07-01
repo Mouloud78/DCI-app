@@ -1,9 +1,42 @@
 ﻿@inherits LayoutComponentBase
+@using MudBlazor
 
-@Body
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+
+<MudLayout>
+
+    <MudAppBar Color="Color.Primary" Elevation="1">
+
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       OnClick="ToggleDrawer" />
+
+        <MudText Class="ml-2">🏥 DCI</MudText>
+
+    </MudAppBar>
+
+    <MudDrawer Open="@_drawerOpen"
+               Variant="DrawerVariant.Responsive">
+
+        <NavMenu />
+
+    </MudDrawer>
+
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+
+</MudLayout>
+
+
+
+@code {
+
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer()
+    {
+        
+        _drawerOpen = !_drawerOpen;
+        Console.WriteLine($"Drawer = {_drawerOpen}");
+    }
+}

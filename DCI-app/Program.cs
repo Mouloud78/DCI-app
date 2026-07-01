@@ -1,6 +1,8 @@
 using DCI_app.Components;
 using Microsoft.EntityFrameworkCore;
 using DCI_Infrastructure.Data;
+using MudBlazor.Services;
+using DCI_app.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,13 +10,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+
+
+builder.Services.AddMudServices();
+
+builder.Services.AddScoped<DashboardService>();
+
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
