@@ -4,6 +4,8 @@
 @using DCI_app.Models
 @inject DCI_app.Services.PatientService PatientService
 
+@inject NavigationManager Nav
+
 <MudContainer Class="mt-6">
 
     <MudText Typo="Typo.h4" Color="Color.Primary">
@@ -72,11 +74,22 @@
 
             <MudTd>
 
-                <MudButton Color="Color.Error"
-                           Size="Size.Small"
-                           OnClick="@(() => Delete(context.Id))">
-                    Supprimer
-                </MudButton>
+                <MudTd>
+
+                    <MudButton Color="Color.Info"
+                               Size="Size.Small"
+                               Variant="Variant.Text"
+                               OnClick="@(() => Nav.NavigateTo($"/patient/{context.Id}"))">
+                        Voir
+                    </MudButton>
+
+                    <MudButton Color="Color.Error"
+                               Size="Size.Small"
+                               OnClick="@(() => Delete(context.Id))">
+                        Supprimer
+                    </MudButton>
+
+                </MudTd>
 
             </MudTd>
         </RowTemplate>

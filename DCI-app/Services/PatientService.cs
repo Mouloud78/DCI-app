@@ -14,7 +14,7 @@ public class PatientService
             FirstName = "John",
             LastName = "Doe",
             Phone = "123456789",
-            Address = "Paris"
+            Address = "Québec"
         });
 
         _patients.Add(new Patient
@@ -23,7 +23,7 @@ public class PatientService
             FirstName = "Marie",
             LastName = "Curie",
             Phone = "987654321",
-            Address = "Lyon"
+            Address = "Montreal"
         });
     }
 
@@ -56,5 +56,11 @@ public class PatientService
             .ToList();
 
         return Task.FromResult(result);
+    }
+
+    public Task<Patient?> GetByIdAsync(int id)
+    {
+        var patient = _patients.FirstOrDefault(p => p.Id == id);
+        return Task.FromResult(patient);
     }
 }

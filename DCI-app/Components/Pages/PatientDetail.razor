@@ -1,0 +1,61 @@
+﻿@page "/patient/{Id:int}"
+@rendermode InteractiveServer
+@using MudBlazor
+@using DCI_app.Models
+@inject DCI_app.Services.PatientService PatientService
+@inject NavigationManager Nav
+
+<MudContainer Class="mt-6">
+
+    @if (_patient is null)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else
+    {
+        <MudButton Variant="Variant.Text"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="@(() => Nav.NavigateTo("/patients"))">
+            Retour
+        </MudButton>
+
+        <MudText Typo="Typo.h4" Color="Color.Primary" Class="mt-3">
+            👤 Fiche Patient
+        </MudText>
+
+        <MudPaper Class="pa-4 mt-4" Elevation="3">
+
+            <MudText Typo="Typo.h6">
+                @(_patient.FullName)
+            </MudText>
+
+            <MudDivider Class="my-3" />
+
+            <MudText><b>Téléphone :</b> @_patient.Phone</MudText>
+            <MudText><b>Adresse :</b> @_patient.Address</MudText>
+
+            <MudText><b>Date naissance :</b> @_patient.DateOfBirth.ToShortDateString()</MudText>
+
+        </MudPaper>
+
+        <!-- SECTION FUTURE -->
+        <MudPaper Class="pa-4 mt-4" Elevation="3">
+            <MudText Typo="Typo.h6">📁 Historique médical</MudText>
+            <MudText Color="Color.Secondary">
+                (à venir : consultations, prescriptions, examens)
+            </MudText>
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Patient? _patient;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _patient = await PatientService.GetByIdAsync(Id);
+    }
+}
