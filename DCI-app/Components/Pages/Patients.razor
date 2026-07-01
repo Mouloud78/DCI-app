@@ -1,0 +1,123 @@
+﻿@page "/patients"
+@rendermode InteractiveServer
+@using MudBlazor
+@using DCI_app.Models
+@inject DCI_app.Services.PatientService PatientService
+
+<MudContainer Class="mt-6">
+
+    <MudText Typo="Typo.h4" Color="Color.Primary">
+        👥 Gestion des Patients
+    </MudText>
+
+    <!-- SEARCH -->
+    <MudTextField @bind-Value="_search"
+                  Placeholder="Rechercher un patient..."
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Immediate="true"
+                  OnDebouncedValueChanged="Search"
+                  Class="mt-3" />
+
+    <!-- FORM -->
+    <MudPaper Class="pa-4 mt-4" Elevation="3">
+
+        <MudText Typo="Typo.h6">➕ Nouveau patient</MudText>
+
+        <MudGrid>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_newPatient.FirstName" Label="Prénom" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_newPatient.LastName" Label="Nom" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_newPatient.Phone" Label="Téléphone" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_newPatient.Address" Label="Adresse" />
+            </MudItem>
+
+        </MudGrid>
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Class="mt-3"
+                   OnClick="AddPatient">
+            Ajouter
+        </MudButton>
+
+    </MudPaper>
+
+    <!-- TABLE -->
+    <MudTable Items="_patients" Class="mt-6" Hover="true">
+
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>Nom</MudTh>
+            <MudTh>Prénom</MudTh>
+            <MudTh>Téléphone</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.Id</MudTd>
+            <MudTd>@context.LastName</MudTd>
+            <MudTd>@context.FirstName</MudTd>
+            <MudTd>@context.Phone</MudTd>
+
+            <MudTd>
+
+                <MudButton Color="Color.Error"
+                           Size="Size.Small"
+                           OnClick="@(() => Delete(context.Id))">
+                    Supprimer
+                </MudButton>
+
+            </MudTd>
+        </RowTemplate>
+
+    </MudTable>
+
+</MudContainer>
+
+@code {
+
+    private List<Patient> _patients = new();
+    private Patient _newPatient = new();
+    private string _search = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _patients = await PatientService.GetAllAsync();
+    }
+
+    private async Task AddPatient()
+    {
+        await PatientService.AddAsync(_newPatient);
+        _newPatient = new Patient();
+        _patients = await PatientService.GetAllAsync();
+    }
+
+    private async Task Delete(int id)
+    {
+        await PatientService.DeleteAsync(id);
+        _patients = await PatientService.GetAllAsync();
+    }
+
+    private async Task Search()
+    {
+        if (string.IsNullOrWhiteSpace(_search))
+        {
+            _patients = await PatientService.GetAllAsync();
+        }
+        else
+        {
+            _patients = await PatientService.SearchAsync(_search);
+        }
+    }
+}

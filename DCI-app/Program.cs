@@ -15,6 +15,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<PatientService>();
 
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
