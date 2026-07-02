@@ -1,49 +1,59 @@
+using System.Threading.Tasks;
 using DCI_app.Components;
 using Microsoft.EntityFrameworkCore;
 using DCI_Infrastructure.Data;
 using MudBlazor.Services;
 using DCI_app.Services;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-
-
-
-builder.Services.AddMudServices();
-
-builder.Services.AddScoped<DashboardService>();
-builder.Services.AddScoped<PatientService>();
-builder.Services.AddScoped<MedicalHistoryService>();
-builder.Services.AddScoped<ConsultationService>();
-
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+public static class Program
 {
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+
+        // Add services to the container.
+        //builder.Services.AddRazorComponents()
+        //    .AddInteractiveServerComponents();
+        builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents(options =>
+                {
+                     options.DetailedErrors = true;
+                 });
 
 
-var app = builder.Build();
 
+        builder.Services.AddMudServices();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+        builder.Services.AddScoped<DashboardService>();
+        builder.Services.AddScoped<PatientService>();
+        builder.Services.AddScoped<MedicalHistoryService>();
+        builder.Services.AddScoped<ConsultationService>();
+        builder.Services.AddScoped<DoctorService>();
+
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        {
+            options.UseSqlServer(
+                builder.Configuration.GetConnectionString("DefaultConnection"));
+        });
+
+        var app = builder.Build();
+
+        // Configure the HTTP request pipeline.
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseExceptionHandler("/Error", createScopeForErrors: true);
+            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+            app.UseHsts();
+        }
+        app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+        app.UseHttpsRedirection();
+
+        app.UseAntiforgery();
+
+        app.MapStaticAssets();
+        app.MapRazorComponents<App>()
+            .AddInteractiveServerRenderMode();
+
+        await app.RunAsync();
+    }
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
-
-app.UseAntiforgery();
-
-app.MapStaticAssets();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
-
-app.Run();

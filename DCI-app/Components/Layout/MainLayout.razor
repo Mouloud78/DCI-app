@@ -1,7 +1,10 @@
 ﻿@inherits LayoutComponentBase
 @using MudBlazor
 
-
+<MudThemeProvider Theme="@DciTheme.Theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <MudLayout>
 
@@ -10,7 +13,9 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu"
                        OnClick="ToggleDrawer" />
 
-        <MudText Class="ml-2">🏥 DCI</MudText>
+        <MudText Class="ml-2">
+            🏥 DCI
+        </MudText>
 
     </MudAppBar>
 
@@ -21,13 +26,13 @@
 
     </MudDrawer>
 
-    <MudMainContent>
+    <MudMainContent Class="pa-12">
+
         @Body
+
     </MudMainContent>
 
 </MudLayout>
-
-
 
 @code {
 
@@ -35,8 +40,7 @@
 
     private void ToggleDrawer()
     {
-        
         _drawerOpen = !_drawerOpen;
-        Console.WriteLine($"Drawer = {_drawerOpen}");
     }
+
 }

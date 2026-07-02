@@ -1,0 +1,46 @@
+﻿@page "/doctors"
+@rendermode InteractiveServer
+
+@using MudBlazor
+@using DCI_app.Models
+@inject DCI_app.Services.DoctorService DoctorService
+
+<MudContainer Class="mt-6">
+
+    <MudText Typo="Typo.h4" Color="Color.Primary">
+        👨‍⚕️ Médecins
+    </MudText>
+
+    <MudPaper Class="pa-4 mt-4" Elevation="3">
+
+        <MudTable Items="_doctors" Hover="true">
+
+            <HeaderContent>
+                <MudTh>Nom</MudTh>
+                <MudTh>Spécialité</MudTh>
+                <MudTh>Téléphone</MudTh>
+                <MudTh>Email</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd>@context.FullName</MudTd>
+                <MudTd>@context.Specialty</MudTd>
+                <MudTd>@context.Phone</MudTd>
+                <MudTd>@context.Email</MudTd>
+            </RowTemplate>
+
+        </MudTable>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    private List<Doctor> _doctors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _doctors = await DoctorService.GetAllAsync();
+    }
+}

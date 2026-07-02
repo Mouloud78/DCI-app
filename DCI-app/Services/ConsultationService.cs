@@ -22,4 +22,32 @@ public class ConsultationService
         _consultations.Add(consultation);
         return Task.CompletedTask;
     }
+
+    public Task UpdateAsync(Consultation consultation)
+    {
+        var existing = _consultations.FirstOrDefault(c => c.Id == consultation.Id);
+
+        if (existing != null)
+        {
+            existing.DoctorName = consultation.DoctorName;
+            existing.Symptoms = consultation.Symptoms;
+            existing.ClinicalExam = consultation.ClinicalExam;
+            existing.Diagnosis = consultation.Diagnosis;
+            existing.TreatmentPlan = consultation.TreatmentPlan;
+            existing.Notes = consultation.Notes;
+            existing.Status = consultation.Status;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task CloseAsync(int id)
+    {
+        var consultation = _consultations.FirstOrDefault(c => c.Id == id);
+
+        if (consultation != null)
+            consultation.Status = ConsultationStatus.Closed;
+
+        return Task.CompletedTask;
+    }
 }

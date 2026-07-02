@@ -7,7 +7,9 @@
 @inject DCI_app.Services.PatientService PatientService
 @inject DCI_app.Services.MedicalHistoryService HistoryService
 @inject DCI_app.Services.ConsultationService ConsultationService
+@inject DCI_app.Services.DoctorService DoctorService
 @inject NavigationManager Nav
+
 
 <MudContainer Class="mt-6">
 
@@ -23,62 +25,35 @@
     }
     else
     {
-        <MudButton Variant="Variant.Text"
-                   StartIcon="@Icons.Material.Filled.ArrowBack"
-                   OnClick="@(() => Nav.NavigateTo("/patients"))">
-            Retour
-        </MudButton>
 
-        <MudText Typo="Typo.h4" Color="Color.Primary" Class="mt-3">
-            👤 @_patient.FullName
-        </MudText>
+        <!-- ================= HEADER ================= -->
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
 
-        <MudTabs Elevation="2" Rounded="true" Class="mt-4">
+            <MudButton Variant="Variant.Text"
+                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       OnClick="@(() => Nav.NavigateTo("/patients"))">
+                Retour
+            </MudButton>
 
-            <!-- ================= PATIENT INFO ================= -->
+            <MudText Typo="Typo.h4" Color="Color.Primary">
+                👤 @_patient.FullName
+            </MudText>
+
+        </MudStack>
+
+        <MudDivider Class="my-3" />
+
+        <!-- ================= TABS ================= -->
+        <MudTabs Elevation="2">
+
+            <!-- ================= INFO PATIENT ================= -->
             <MudTabPanel Text="👤 Infos">
 
-                <MudPaper Class="pa-4 mt-3" Elevation="3">
+                <MudPaper Class="pa-4 mt-3">
 
-                    <MudText><b>Téléphone:</b> @_patient.Phone</MudText>
-                    <MudText><b>Adresse:</b> @_patient.Address</MudText>
-                    <MudText><b>Date naissance:</b> @_patient.DateOfBirth.ToShortDateString()</MudText>
-
-                </MudPaper>
-
-            </MudTabPanel>
-
-            <!-- ================= HISTORIQUE ================= -->
-            <MudTabPanel Text="🧾 Historique">
-
-                <MudPaper Class="pa-4 mt-3" Elevation="3">
-
-                    @if (!_histories.Any())
-                    {
-                        <MudText Color="Color.Secondary">
-                            Aucun historique médical
-                        </MudText>
-                    }
-                    else
-                    {
-                        <MudTable Items="_histories" Hover="true">
-
-                            <HeaderContent>
-                                <MudTh>Date</MudTh>
-                                <MudTh>Diagnostic</MudTh>
-                                <MudTh>Traitement</MudTh>
-                                <MudTh>Notes</MudTh>
-                            </HeaderContent>
-
-                            <RowTemplate>
-                                <MudTd>@context.Date.ToShortDateString()</MudTd>
-                                <MudTd>@context.Diagnosis</MudTd>
-                                <MudTd>@context.Treatment</MudTd>
-                                <MudTd>@context.Notes</MudTd>
-                            </RowTemplate>
-
-                        </MudTable>
-                    }
+                    <MudText><b>Téléphone :</b> @_patient.Phone</MudText>
+                    <MudText><b>Adresse :</b> @_patient.Address</MudText>
+                    <MudText><b>Date naissance :</b> @_patient.DateOfBirth.ToShortDateString()</MudText>
 
                 </MudPaper>
 
@@ -87,21 +62,35 @@
             <!-- ================= CONSULTATIONS ================= -->
             <MudTabPanel Text="🩺 Consultations">
 
-                <!-- FORMULAIRE -->
-                <MudPaper Class="pa-4 mt-3" Elevation="3">
+                <!-- FORM -->
+                <MudPaper Class="pa-4 mt-3">
 
                     <MudText Typo="Typo.h6">Nouvelle consultation</MudText>
 
                     <MudGrid>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_newConsultation.DoctorName"
-                                          Label="Médecin" />
+                            <MudSelect T="int?" @bind-Value="_newConsultation.DoctorId" Label="Médecin">
+
+                                @foreach (var doc in _doctors)
+                                {
+                                    <MudSelectItem T="int?" Value="@doc.Id">
+                                        @doc.FullName - @doc.Specialty
+                                    </MudSelectItem>
+                                }
+
+                            </MudSelect>
                         </MudItem>
 
                         <MudItem xs="12">
                             <MudTextField @bind-Value="_newConsultation.Symptoms"
                                           Label="Symptômes"
+                                          Lines="2" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_newConsultation.ClinicalExam"
+                                          Label="Examen clinique"
                                           Lines="2" />
                         </MudItem>
 
@@ -112,45 +101,72 @@
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField @bind-Value="_newConsultation.Prescription"
-                                          Label="Prescription"
+                            <MudTextField @bind-Value="_newConsultation.TreatmentPlan"
+                                          Label="Traitement"
                                           Lines="2" />
                         </MudItem>
 
                     </MudGrid>
 
-                    <MudButton Color="Color.Primary"
+                    <MudButton Class="mt-3"
+                               Color="Color.Primary"
                                Variant="Variant.Filled"
-                               Class="mt-3"
                                OnClick="AddConsultation">
-                        Ajouter consultation
+                        ➕ Ajouter consultation
                     </MudButton>
 
                 </MudPaper>
 
-                <!-- TABLE -->
-                <MudPaper Class="pa-4 mt-4" Elevation="3">
+                <!-- LISTE -->
+                <MudPaper Class="pa-4 mt-4">
 
-                    @if (!_consultations.Any())
+                    <MudText Typo="Typo.h6">Historique consultations</MudText>
+
+                    <MudTable Items="_consultations" Hover="true">
+
+                        <HeaderContent>
+                            <MudTh>Date</MudTh>
+                            <MudTh>Médecin</MudTh>
+                            <MudTh>Diagnostic</MudTh>
+                            <MudTh>Statut</MudTh>
+                        </HeaderContent>
+
+                        <RowTemplate>
+                            <MudTd>@context.Date.ToShortDateString()</MudTd>
+                            <MudTd>@GetDoctorName(context.DoctorId)</MudTd>
+                            <MudTd>@context.Diagnosis</MudTd>
+                            <MudTd>@context.Status</MudTd>
+                        </RowTemplate>
+
+                    </MudTable>
+
+                </MudPaper>
+
+            </MudTabPanel>
+
+            <!-- ================= HISTORIQUE ================= -->
+            <MudTabPanel Text="🧾 Historique médical">
+
+                <MudPaper Class="pa-4 mt-3">
+
+                    @if (!_histories.Any())
                     {
-                        <MudText Color="Color.Secondary">
-                            Aucune consultation
-                        </MudText>
+                        <MudText>Aucun historique</MudText>
                     }
                     else
                     {
-                        <MudTable Items="_consultations" Hover="true">
+                        <MudTable Items="_histories">
 
                             <HeaderContent>
                                 <MudTh>Date</MudTh>
-                                <MudTh>Médecin</MudTh>
                                 <MudTh>Diagnostic</MudTh>
+                                <MudTh>Traitement</MudTh>
                             </HeaderContent>
 
                             <RowTemplate>
                                 <MudTd>@context.Date.ToShortDateString()</MudTd>
-                                <MudTd>@context.DoctorName</MudTd>
                                 <MudTd>@context.Diagnosis</MudTd>
+                                <MudTd>@context.Treatment</MudTd>
                             </RowTemplate>
 
                         </MudTable>
@@ -161,10 +177,10 @@
             </MudTabPanel>
 
         </MudTabs>
+
     }
 
 </MudContainer>
-
 @code {
 
     [Parameter] public int Id { get; set; }
@@ -174,6 +190,7 @@
     private Patient? _patient;
     private List<MedicalHistory> _histories = new();
     private List<Consultation> _consultations = new();
+    private List<Doctor> _doctors = new();
 
     private Consultation _newConsultation = new();
 
@@ -185,6 +202,7 @@
         {
             _histories = await HistoryService.GetByPatientIdAsync(Id);
             _consultations = await ConsultationService.GetByPatientIdAsync(Id);
+            _doctors = await DoctorService.GetAllAsync();
         }
 
         _loading = false;
@@ -199,5 +217,10 @@
         _newConsultation = new Consultation();
 
         _consultations = await ConsultationService.GetByPatientIdAsync(Id);
+    }
+
+    private string GetDoctorName(int? doctorId)
+    {
+        return _doctors.FirstOrDefault(d => d.Id == doctorId)?.FullName ?? "N/A";
     }
 }
