@@ -176,6 +176,80 @@
 
             </MudTabPanel>
 
+            <!-- ================= PRESCRIPTION ================= -->
+            <MudTabPanel Text="💊 Prescription">
+                <MudPaper Class="pa-4 mt-3">
+
+                    <MudText Typo="Typo.h6">Nouvelle prescription</MudText>
+
+                    <MudGrid>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_newItem.MedicationName"
+                                          Label="Médicament" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_newItem.Dosage"
+                                          Label="Dosage (ex: 500mg)" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_newItem.Frequency"
+                                          Label="Fréquence (ex: 3/jour)" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_newItem.Duration"
+                                          Label="Durée (ex: 5 jours)" />
+                        </MudItem>
+
+                    </MudGrid>
+
+                    <MudButton Color="Color.Primary"
+                               Variant="Variant.Filled"
+                               Class="mt-3"
+                               OnClick="AddMedication">
+                        ➕ Ajouter médicament
+                    </MudButton>
+
+                </MudPaper>
+
+                <MudPaper Class="pa-4 mt-4">
+
+                    <MudText Typo="Typo.h6">Médicaments prescrits</MudText>
+
+                    <MudTable Items="_items" Hover="true" Class="mt-3">
+
+                        <HeaderContent>
+                            <MudTh>Médicament</MudTh>
+                            <MudTh>Dosage</MudTh>
+                            <MudTh>Fréquence</MudTh>
+                            <MudTh>Durée</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+
+                        <RowTemplate>
+                            <MudTd>@context.MedicationName</MudTd>
+                            <MudTd>@context.Dosage</MudTd>
+                            <MudTd>@context.Frequency</MudTd>
+                            <MudTd>@context.Duration</MudTd>
+
+                            <MudTd>
+                                <MudButton Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="@(() => RemoveMedication(context))">
+                                    Supprimer
+                                </MudButton>
+                            </MudTd>
+                        </RowTemplate>
+
+                    </MudTable>
+
+                </MudPaper>
+                </MudTabPanel>
+
+
         </MudTabs>
 
     }
@@ -193,6 +267,17 @@
     private List<Doctor> _doctors = new();
 
     private Consultation _newConsultation = new();
+
+    private Prescription _newPrescription = new();
+    private List<PrescriptionItem> _items = new();
+
+    private PrescriptionItem _newItem = new()
+    {
+        MedicationName = "",
+        Dosage = "",
+        Frequency = "",
+        Duration = ""
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -222,5 +307,26 @@
     private string GetDoctorName(int? doctorId)
     {
         return _doctors.FirstOrDefault(d => d.Id == doctorId)?.FullName ?? "N/A";
+    }
+
+    private void AddMedication()
+    {
+        if (string.IsNullOrWhiteSpace(_newItem.MedicationName))
+            return;
+
+        _items.Add(new PrescriptionItem
+        {
+            MedicationName = _newItem.MedicationName,
+            Dosage = _newItem.Dosage,
+            Frequency = _newItem.Frequency,
+            Duration = _newItem.Duration
+        });
+
+        _newItem = new PrescriptionItem();
+    }
+
+    private void RemoveMedication(PrescriptionItem item)
+    {
+        _items.Remove(item);
     }
 }

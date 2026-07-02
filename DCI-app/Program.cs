@@ -29,6 +29,7 @@ public static class Program
         builder.Services.AddScoped<MedicalHistoryService>();
         builder.Services.AddScoped<ConsultationService>();
         builder.Services.AddScoped<DoctorService>();
+        builder.Services.AddScoped<PrescriptionService>();
 
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
         {
