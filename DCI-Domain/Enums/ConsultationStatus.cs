@@ -1,4 +1,4 @@
-﻿namespace DCI_app.Models;
+﻿namespace DCI_Domain.Enums;
 
 public enum ConsultationStatus
 {

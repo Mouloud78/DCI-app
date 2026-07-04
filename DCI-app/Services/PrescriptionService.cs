@@ -1,4 +1,5 @@
-﻿using DCI_app.Models;
+﻿using DCI_Domain.Entities;
+using DCI_Domain.Enums;
 
 namespace DCI_app.Services;
 
@@ -8,16 +9,19 @@ public class PrescriptionService
 
     public Task<List<Prescription>> GetByConsultationIdAsync(int consultationId)
     {
-        var result = _prescriptions
-            .Where(p => p.ConsultationId == consultationId)
-            .ToList();
-
-        return Task.FromResult(result);
+        return Task.FromResult(
+            _prescriptions.Where(x => x.ConsultationId == consultationId).ToList()
+        );
     }
 
     public Task AddAsync(Prescription prescription)
     {
         prescription.Id = _prescriptions.Count + 1;
+
+        foreach (var item in prescription.Items)
+        {
+            item.PrescriptionId = prescription.Id;
+        }
 
         _prescriptions.Add(prescription);
 

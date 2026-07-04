@@ -2,7 +2,8 @@
 @rendermode InteractiveServer
 
 @using MudBlazor
-@using DCI_app.Models
+using DCI_Domain.Entities;
+using DCI_Domain.Enums;
 @inject DCI_app.Services.DoctorService DoctorService
 
 <MudContainer Class="mt-6">
@@ -37,7 +38,7 @@
 
 @code {
 
-    private List<Doctor> _doctors = new();
+    private List<DCI_Domain.Entities.Doctor> _doctors = new();
 
     protected override async Task OnInitializedAsync()
     {

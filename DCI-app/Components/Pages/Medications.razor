@@ -1,0 +1,208 @@
+﻿@page "/medications"
+@rendermode InteractiveServer
+
+@using MudBlazor
+@using DCI_Domain.Entities
+@using DCI_app.Services
+@using DCI_app.Components.Medications
+
+@inject MedicationService MedicationService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-6">
+
+    <MudStack Row="true"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center">
+
+        <MudText Typo="Typo.h4">
+            💊 Catalogue des médicaments
+        </MudText>
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenDialog">
+
+            Nouveau médicament
+
+        </MudButton>
+
+    </MudStack>
+
+    <MudTextField T="string"
+                  Class="mt-4"
+                  Placeholder="Rechercher..."
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Immediate="true"
+                  @bind-Value="_search"
+                  @bind-Value:after="Filter" />
+
+    <MudTable Items="_filtered"
+              Hover="true"
+              Dense="true"
+              Striped="true"
+              Class="mt-4">
+
+        <HeaderContent>
+
+            <MudTh>Nom</MudTh>
+            <MudTh>DCI</MudTh>
+            <MudTh>Dosage</MudTh>
+            <MudTh>Forme</MudTh>
+            <MudTh>Voie</MudTh>
+            <MudTh>Disponible</MudTh>
+            <MudTh></MudTh>
+
+        </HeaderContent>
+
+        <RowTemplate>
+
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.GenericName</MudTd>
+            <MudTd>@context.Strength</MudTd>
+            <MudTd>@context.Form</MudTd>
+            <MudTd>@context.Route</MudTd>
+
+            <MudTd>
+
+                @if (context.IsAvailable)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle"
+                             Color="Color.Success"/>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Cancel"
+                             Color="Color.Error"/>
+                }
+
+            </MudTd>
+
+            <MudTd>
+
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Primary"
+                               OnClick="@(()=>Edit(context))"/>
+
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="@(()=>Delete(context.Id))"/>
+
+            </MudTd>
+
+        </RowTemplate>
+
+    </MudTable>
+
+</MudContainer>
+
+@code{
+
+    
+
+    private List<Medication> _medications = new();
+
+    private List<Medication> _filtered = new();
+
+    private string _search = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _medications = await MedicationService.GetAllAsync();
+
+        _filtered = _medications;
+    }
+
+    private void Filter()
+    {
+        if (string.IsNullOrWhiteSpace(_search))
+        {
+            _filtered = _medications;
+            return;
+        }
+
+        _filtered = _medications
+            .Where(x =>
+                x.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                || x.GenericName.Contains(_search, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private async Task OpenDialog()
+    {
+        var dialog = await DialogService.ShowAsync<MedicationDialog>(
+            "Nouveau médicament");
+
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Médicament ajouté", Severity.Success);
+        }
+    }
+
+    private async Task Edit(Medication medication)
+    {
+        var parameters = new DialogParameters
+    {
+        { nameof(MedicationDialog.Medication), medication }
+    };
+
+        var dialog = await DialogService.ShowAsync<MedicationDialog>(
+            "Modifier médicament",
+            parameters);
+
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Médicament modifié", Severity.Success);
+        }
+    }
+
+    // private async Task Delete(int id)
+    // {
+    //     bool? confirm = await DialogService.ShowMessageBox(
+
+    //         "Confirmation",
+
+    //         "Supprimer ce médicament ?",
+
+    //         yesText: "Oui",
+
+    //         cancelText: "Non"
+
+    //     );
+
+    //     if (confirm == true)
+    //     {
+    //         await MedicationService.DeleteAsync(id);
+
+    //         await LoadData();
+
+    //         Snackbar.Add("Supprimé", Severity.Success);
+    //     }
+    // }
+
+    private async Task Delete(int id)
+    {
+        await MedicationService.DeleteAsync(id);
+
+        await LoadData();
+
+        Snackbar.Add("Médicament supprimé", Severity.Success);
+    }
+
+}

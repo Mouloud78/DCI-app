@@ -2,14 +2,18 @@
 @rendermode InteractiveServer
 
 @using MudBlazor
-@using DCI_app.Models
+@using DCI_Domain.Entities;
+@using DCI_Domain.Enums;
 
 @inject DCI_app.Services.PatientService PatientService
 @inject DCI_app.Services.MedicalHistoryService HistoryService
 @inject DCI_app.Services.ConsultationService ConsultationService
 @inject DCI_app.Services.DoctorService DoctorService
+@inject DCI_app.Services.MedicationService MedicationService
+@inject DCI_app.Services.PrescriptionService PrescriptionService
 @inject NavigationManager Nav
-
+@inject PrescriptionPdfService PdfService
+@inject IJSRuntime JS
 
 <MudContainer Class="mt-6">
 
@@ -25,7 +29,6 @@
     }
     else
     {
-
         <!-- ================= HEADER ================= -->
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
 
@@ -36,7 +39,7 @@
             </MudButton>
 
             <MudText Typo="Typo.h4" Color="Color.Primary">
-                👤 @_patient.FullName
+                👤 @_patient.LastName, @_patient.FirstName
             </MudText>
 
         </MudStack>
@@ -46,14 +49,14 @@
         <!-- ================= TABS ================= -->
         <MudTabs Elevation="2">
 
-            <!-- ================= INFO PATIENT ================= -->
+            <!-- ================= INFOS ================= -->
             <MudTabPanel Text="👤 Infos">
 
                 <MudPaper Class="pa-4 mt-3">
 
                     <MudText><b>Téléphone :</b> @_patient.Phone</MudText>
                     <MudText><b>Adresse :</b> @_patient.Address</MudText>
-                    <MudText><b>Date naissance :</b> @_patient.DateOfBirth.ToShortDateString()</MudText>
+                    <MudText><b>Date naissance :</b> @_patient.BirthDate.ToShortDateString()</MudText>
 
                 </MudPaper>
 
@@ -62,7 +65,6 @@
             <!-- ================= CONSULTATIONS ================= -->
             <MudTabPanel Text="🩺 Consultations">
 
-                <!-- FORM -->
                 <MudPaper Class="pa-4 mt-3">
 
                     <MudText Typo="Typo.h6">Nouvelle consultation</MudText>
@@ -71,113 +73,79 @@
 
                         <MudItem xs="12" sm="6">
                             <MudSelect T="int?" @bind-Value="_newConsultation.DoctorId" Label="Médecin">
-
                                 @foreach (var doc in _doctors)
                                 {
-                                    <MudSelectItem T="int?" Value="@doc.Id">
-                                        @doc.FullName - @doc.Specialty
+                                    <MudSelectItem Value="@doc.Id">
+                                        @doc.FullName
                                     </MudSelectItem>
                                 }
-
                             </MudSelect>
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField @bind-Value="_newConsultation.Symptoms"
-                                          Label="Symptômes"
-                                          Lines="2" />
+                            <MudTextField @bind-Value="_newConsultation.Symptoms" Label="Symptômes" Lines="2" />
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField @bind-Value="_newConsultation.ClinicalExam"
-                                          Label="Examen clinique"
-                                          Lines="2" />
+                            <MudTextField @bind-Value="_newConsultation.Diagnosis" Label="Diagnostic" Lines="2" />
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField @bind-Value="_newConsultation.Diagnosis"
-                                          Label="Diagnostic"
-                                          Lines="2" />
-                        </MudItem>
-
-                        <MudItem xs="12">
-                            <MudTextField @bind-Value="_newConsultation.TreatmentPlan"
-                                          Label="Traitement"
-                                          Lines="2" />
+                            <MudTextField @bind-Value="_newConsultation.TreatmentPlan" Label="Traitement" Lines="2" />
                         </MudItem>
 
                     </MudGrid>
 
                     <MudButton Class="mt-3"
                                Color="Color.Primary"
-                               Variant="Variant.Filled"
                                OnClick="AddConsultation">
                         ➕ Ajouter consultation
                     </MudButton>
 
                 </MudPaper>
 
-                <!-- LISTE -->
-                <MudPaper Class="pa-4 mt-4">
+                <MudTable Items="_consultations" Hover="true" Class="mt-4">
 
-                    <MudText Typo="Typo.h6">Historique consultations</MudText>
+                    <HeaderContent>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Médecin</MudTh>
+                        <MudTh>Diagnostic</MudTh>
+                    </HeaderContent>
 
-                    <MudTable Items="_consultations" Hover="true">
+                    <RowTemplate>
+                        <MudTd>@context.Date.ToShortDateString()</MudTd>
+                        <MudTd>@GetDoctorName(context.DoctorId)</MudTd>
+                        <MudTd>@context.Diagnosis</MudTd>
+                    </RowTemplate>
 
-                        <HeaderContent>
-                            <MudTh>Date</MudTh>
-                            <MudTh>Médecin</MudTh>
-                            <MudTh>Diagnostic</MudTh>
-                            <MudTh>Statut</MudTh>
-                        </HeaderContent>
-
-                        <RowTemplate>
-                            <MudTd>@context.Date.ToShortDateString()</MudTd>
-                            <MudTd>@GetDoctorName(context.DoctorId)</MudTd>
-                            <MudTd>@context.Diagnosis</MudTd>
-                            <MudTd>@context.Status</MudTd>
-                        </RowTemplate>
-
-                    </MudTable>
-
-                </MudPaper>
+                </MudTable>
 
             </MudTabPanel>
 
             <!-- ================= HISTORIQUE ================= -->
-            <MudTabPanel Text="🧾 Historique médical">
+            <MudTabPanel Text="🧾 Historique">
 
-                <MudPaper Class="pa-4 mt-3">
+                <MudTable Items="_histories" Hover="true">
 
-                    @if (!_histories.Any())
-                    {
-                        <MudText>Aucun historique</MudText>
-                    }
-                    else
-                    {
-                        <MudTable Items="_histories">
+                    <HeaderContent>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Diagnostic</MudTh>
+                        <MudTh>Traitement</MudTh>
+                    </HeaderContent>
 
-                            <HeaderContent>
-                                <MudTh>Date</MudTh>
-                                <MudTh>Diagnostic</MudTh>
-                                <MudTh>Traitement</MudTh>
-                            </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Date.ToShortDateString()</MudTd>
+                        <MudTd>@context.Diagnosis</MudTd>
+                        <MudTd>@context.Treatment</MudTd>
+                    </RowTemplate>
 
-                            <RowTemplate>
-                                <MudTd>@context.Date.ToShortDateString()</MudTd>
-                                <MudTd>@context.Diagnosis</MudTd>
-                                <MudTd>@context.Treatment</MudTd>
-                            </RowTemplate>
-
-                        </MudTable>
-                    }
-
-                </MudPaper>
+                </MudTable>
 
             </MudTabPanel>
 
             <!-- ================= PRESCRIPTION ================= -->
             <MudTabPanel Text="💊 Prescription">
+
                 <MudPaper Class="pa-4 mt-3">
 
                     <MudText Typo="Typo.h6">Nouvelle prescription</MudText>
@@ -185,76 +153,85 @@
                     <MudGrid>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_newItem.MedicationName"
-                                          Label="Médicament" />
+                            <MudSelect T="int" @bind-Value="_newItem.MedicationId" Label="Médicament">
+                                @foreach (var med in _medications)
+                                {
+                                    <MudSelectItem Value="@med.Id">
+                                        @med.Name - @med.Strength
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_newItem.Dosage"
-                                          Label="Dosage (ex: 500mg)" />
+                            <MudTextField @bind-Value="_newItem.Dosage" Label="Dosage" />
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_newItem.Frequency"
-                                          Label="Fréquence (ex: 3/jour)" />
+                            <MudTextField @bind-Value="_newItem.Frequency" Label="Fréquence" />
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_newItem.Duration"
-                                          Label="Durée (ex: 5 jours)" />
+                            <MudTextField @bind-Value="_newItem.Duration" Label="Durée" />
                         </MudItem>
 
                     </MudGrid>
 
-                    <MudButton Color="Color.Primary"
-                               Variant="Variant.Filled"
-                               Class="mt-3"
+                    <MudButton Class="mt-3"
+                               Color="Color.Primary"
                                OnClick="AddMedication">
                         ➕ Ajouter médicament
                     </MudButton>
 
                 </MudPaper>
 
-                <MudPaper Class="pa-4 mt-4">
+                <MudTable Items="_items" Hover="true" Class="mt-4">
 
-                    <MudText Typo="Typo.h6">Médicaments prescrits</MudText>
+                    <HeaderContent>
+                        <MudTh>Médicament</MudTh>
+                        <MudTh>Dosage</MudTh>
+                        <MudTh>Fréquence</MudTh>
+                        <MudTh>Durée</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
 
-                    <MudTable Items="_items" Hover="true" Class="mt-3">
+                    <RowTemplate>
+                        <MudTd>
+                            @(_medications.FirstOrDefault(m => m.Id == context.MedicationId)?.Name)
+                        </MudTd>
+                        <MudTd>@context.Dosage</MudTd>
+                        <MudTd>@context.Frequency</MudTd>
+                        <MudTd>@context.Duration</MudTd>
 
-                        <HeaderContent>
-                            <MudTh>Médicament</MudTh>
-                            <MudTh>Dosage</MudTh>
-                            <MudTh>Fréquence</MudTh>
-                            <MudTh>Durée</MudTh>
-                            <MudTh></MudTh>
-                        </HeaderContent>
+                        <MudTd>
+                            <MudButton Color="Color.Error"
+                                       Size="Size.Small"
+                                       OnClick="@(() => RemoveMedication(context))">
+                                Supprimer
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
 
-                        <RowTemplate>
-                            <MudTd>@context.MedicationName</MudTd>
-                            <MudTd>@context.Dosage</MudTd>
-                            <MudTd>@context.Frequency</MudTd>
-                            <MudTd>@context.Duration</MudTd>
+                </MudTable>
 
-                            <MudTd>
-                                <MudButton Color="Color.Error"
-                                           Size="Size.Small"
-                                           OnClick="@(() => RemoveMedication(context))">
-                                    Supprimer
-                                </MudButton>
-                            </MudTd>
-                        </RowTemplate>
+                <MudButton Class="mt-3"
+                           Color="Color.Success"
+                           OnClick="SavePrescription">
+                    💾 Enregistrer prescription
+                </MudButton>
+                <MudButton Color="Color.Info"
+                           Variant="Variant.Filled"
+                           OnClick="DownloadPdf">
+                    📄 Télécharger ordonnance PDF
+                </MudButton>
 
-                    </MudTable>
-
-                </MudPaper>
-                </MudTabPanel>
-
+            </MudTabPanel>
 
         </MudTabs>
-
     }
 
 </MudContainer>
+
 @code {
 
     [Parameter] public int Id { get; set; }
@@ -265,19 +242,12 @@
     private List<MedicalHistory> _histories = new();
     private List<Consultation> _consultations = new();
     private List<Doctor> _doctors = new();
+    private List<Medication> _medications = new();
 
     private Consultation _newConsultation = new();
 
-    private Prescription _newPrescription = new();
     private List<PrescriptionItem> _items = new();
-
-    private PrescriptionItem _newItem = new()
-    {
-        MedicationName = "",
-        Dosage = "",
-        Frequency = "",
-        Duration = ""
-    };
+    private PrescriptionItem _newItem = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -288,6 +258,7 @@
             _histories = await HistoryService.GetByPatientIdAsync(Id);
             _consultations = await ConsultationService.GetByPatientIdAsync(Id);
             _doctors = await DoctorService.GetAllAsync();
+            _medications = await MedicationService.GetAllAsync();
         }
 
         _loading = false;
@@ -296,27 +267,25 @@
     private async Task AddConsultation()
     {
         _newConsultation.PatientId = Id;
-
         await ConsultationService.AddAsync(_newConsultation);
 
         _newConsultation = new Consultation();
-
         _consultations = await ConsultationService.GetByPatientIdAsync(Id);
     }
 
-    private string GetDoctorName(int? doctorId)
-    {
-        return _doctors.FirstOrDefault(d => d.Id == doctorId)?.FullName ?? "N/A";
-    }
+    private string GetDoctorName(int? id)
+        => _doctors.FirstOrDefault(d => d.Id == id)?.FullName ?? "N/A";
 
     private void AddMedication()
     {
-        if (string.IsNullOrWhiteSpace(_newItem.MedicationName))
-            return;
+        if (_newItem.MedicationId == 0) return;
+
+        var med = _medications.FirstOrDefault(m => m.Id == _newItem.MedicationId);
 
         _items.Add(new PrescriptionItem
         {
-            MedicationName = _newItem.MedicationName,
+            MedicationId = _newItem.MedicationId,
+            MedicationName = med?.Name ?? "",
             Dosage = _newItem.Dosage,
             Frequency = _newItem.Frequency,
             Duration = _newItem.Duration
@@ -326,7 +295,36 @@
     }
 
     private void RemoveMedication(PrescriptionItem item)
+        => _items.Remove(item);
+
+    private async Task SavePrescription()
     {
-        _items.Remove(item);
+        var prescription = new Prescription
+        {
+            PatientId = Id,
+            ConsultationId = _consultations.LastOrDefault()?.Id ?? 0,
+            DoctorId = _consultations.LastOrDefault()?.DoctorId ?? 0,
+            CreatedAt = DateTime.Now,
+            Items = _items
+        };
+
+        await PrescriptionService.AddAsync(prescription);
+
+        _items.Clear();
+    }
+
+    private async Task DownloadPdf()
+    {
+        var prescription = new Prescription
+        {
+            CreatedAt = DateTime.Now,
+            Items = _items
+        };
+
+        var pdfBytes = PdfService.Generate(prescription, _patient!);
+
+        var base64 = Convert.ToBase64String(pdfBytes);
+
+        await JS.InvokeVoidAsync("downloadPdf", base64, "ordonnance.pdf");
     }
 }

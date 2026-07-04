@@ -1,4 +1,5 @@
-﻿using DCI_app.Models;
+﻿using DCI_Domain.Entities;
+using DCI_Domain.Enums;
 
 namespace DCI_app.Services;
 

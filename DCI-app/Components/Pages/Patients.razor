@@ -1,7 +1,8 @@
 ﻿@page "/patients"
 @rendermode InteractiveServer
 @using MudBlazor
-@using DCI_app.Models
+@using DCI_Domain.Entities;
+@using DCI_Domain.Enums;
 @inject DCI_app.Services.PatientService PatientService
 
 @inject NavigationManager Nav
